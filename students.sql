@@ -67,22 +67,20 @@
  4 5
  
  */
--- @block
-CREATE DATABASE uni;
+CREATE DATABASE IF NOT EXISTS uni;
 
 
 USE uni;
 
 
-CREATE TABLE Students (
+CREATE TABLE IF NOT EXISTS Students (
   id integer PRIMARY KEY AUTO_INCREMENT,
   name varchar(128) NOT NULL,
   age integer
 );
 
 
--- @block
-CREATE TABLE Teachers (
+CREATE TABLE IF NOT EXISTS Teachers (
   id integer AUTO_INCREMENT,
   name varchar(128) NOT NULL,
   age integer,
@@ -90,14 +88,14 @@ CREATE TABLE Teachers (
 );
 
 
-CREATE TABLE Competencies (
+CREATE TABLE IF NOT EXISTS Competencies (
   id integer AUTO_INCREMENT,
   title varchar(128) NOT NULL,
   PRIMARY KEY (id)
 );
 
 
-CREATE TABLE TeachersToCompetencies (
+CREATE TABLE IF NOT EXISTS TeachersToCompetencies (
   id integer AUTO_INCREMENT,
   teacher_id integer,
   competencies_id integer,
@@ -107,7 +105,7 @@ CREATE TABLE TeachersToCompetencies (
 );
 
 
-CREATE TABLE Courses (
+CREATE TABLE IF NOT EXISTS Courses (
   id integer AUTO_INCREMENT,
   teacher_id integer,
   title varchar(128) NOT NULL,
@@ -118,7 +116,7 @@ CREATE TABLE Courses (
 );
 
 
-CREATE TABLE StudentsToCourses (
+CREATE TABLE IF NOT EXISTS StudentsToCourses (
   id integer AUTO_INCREMENT,
   student_id integer,
   course_id integer,
@@ -178,9 +176,10 @@ VALUES (1, 1),
   (3, 3),
   (4, 5);
 
+
 -- @block
- (1, 'Algebra of logic', 2),
- (2, 'Mathematical statistics', 3),
- (4, 'Higher mathematics', 5),
- (5, 'Javascript', 1),
- (5, 'Basic Python', 1),
+(1, 'Algebra of logic', 2),
+(2, 'Mathematical statistics', 3),
+(4, 'Higher mathematics', 5),
+(5, 'Javascript', 1),
+(5, 'Basic Python', 1),
