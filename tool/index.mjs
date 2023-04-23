@@ -61,3 +61,9 @@ const { orderId } = await fetch(host + '/order', {
   body: JSON.stringify(order),
   headers,
 }).then((r) => r.json())
+
+const ordersOfRest = await fetch(host + `/restaurants/${restId}/orders`).then(
+  (r) => r.json()
+)
+
+console.log(ordersOfRest.length === 1 && orderId === ordersOfRest[0]._id)
