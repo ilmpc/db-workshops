@@ -5,6 +5,7 @@ const ORDER_STATUSES = {
   cooking: 'cooking',
   ready: 'ready',
   completed: 'completed',
+  canceled: 'canceled',
 }
 
 export async function makeOrder(req) {
@@ -23,14 +24,104 @@ export async function makeOrder(req) {
   return { orderId: insertedId }
 }
 
-// TODO: should return all orders by default not completed for this rest
-// additional: query params option to filter orders by status
 export async function getRestaurantsOrders(req) {
   const orders = this.mongo.db.collection('orders')
   const { restId } = req.params
-  return orders.find({ restaurant_id: new ObjectId(restId) }).toArray()
+  const { status } = req.query
+
+  if (status && !Object.values(ORDER_STATUSES).includes(status)) {
+    throw new Error('No such status')
+  }
+
+  return orders
+    .find({
+      restaurant_id: new ObjectId(restId),
+      status: status == null ? { $ne: ORDER_STATUSES.completed } : status,
+    })
+    .toArray()
 }
 
-// TODO: should return all orders by default not completed for this rest
-// additional: query params option to filter orders by status
-export async function getUsersOrders(req) {}
+export async function getUsersOrders(req) {
+  const orders = this.mongo.db.collection('orders')
+  const { userId } = req.params
+  const { status } = req.query
+
+  if (status && !Object.values(ORDER_STATUSES).includes(status)) {
+    throw new Error('No such status')
+  }
+
+  return orders
+    .find({
+      user_id: new ObjectId(userId),
+      status: status == null ? { $ne: ORDER_STATUSES.completed } : status,
+    })
+    .toArray()
+}
+
+export async function changeOrderStatus(req) {
+  const orders = this.mongo.db.collection('orders')
+  const { orderId, status } = req.params
+
+  if (!Object.values(ORDER_STATUSES).includes(status)) {
+    throw new Error('Invalid status')
+  }
+  return orders.updateOne({ _id: new ObjectId(orderId) }, { $set: { status } })
+}
+
+export async function getOrder(req) {
+  const orders = this.mongo.db.collection('orders')
+  const { orderId } = req.params
+  const cursor = orders.aggregate([
+    {
+      $match: {
+        _id: new ObjectId(orderId),
+      },
+    },
+    {
+      $lookup: {
+        localField: 'user_id',
+        from: 'users',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurant_id',
+        foreignField: '_id',
+        as: 'restaurant',
+      },
+    },
+
+    {
+      $project: {
+        user_id: 0,
+        restaurant_id: 0,
+      },
+    },
+    {
+      $unwind: {
+        path: '$user',
+      },
+    },
+    {
+      $unwind: {
+        path: '$restaurant',
+      },
+    },
+  ])
+  const order = await cursor.next().finally(() => cursor.close())
+  const menu = order.restaurant.menu.reduce((acc, e) => {
+    acc[e._id] = e
+    return acc
+  }, {})
+  order.product_list = order.product_list.map(({ id, amount }) => {
+    return {
+      ...menu[id],
+      amount,
+    }
+  })
+  delete order.restaurant.menu
+  return order
+}

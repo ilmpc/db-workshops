@@ -1,4 +1,10 @@
-import { getRestaurantsOrders, getUsersOrders, makeOrder } from './orders.mjs'
+import {
+  getRestaurantsOrders,
+  getUsersOrders,
+  makeOrder,
+  changeOrderStatus,
+  getOrder,
+} from './orders.mjs'
 import {
   getRestaurantById,
   addProductsInMenu,
@@ -140,6 +146,40 @@ export default async function routes(fastify, options) {
     schema: {
       params: {
         restId: { type: 'string' },
+      },
+    },
+  })
+
+  fastify.route({
+    method: 'GET',
+    url: '/users/:userId/orders',
+    handler: getUsersOrders,
+    schema: {
+      params: {
+        userId: { type: 'string' },
+      },
+    },
+  })
+
+  fastify.route({
+    method: 'PUT',
+    url: '/orders/:orderId/status/:status',
+    handler: changeOrderStatus,
+    schema: {
+      params: {
+        orderId: { type: 'string' },
+        status: { type: 'string' },
+      },
+    },
+  })
+
+  fastify.route({
+    method: 'GET',
+    url: '/orders/:orderId',
+    handler: getOrder,
+    schema: {
+      params: {
+        orderId: { type: 'string' },
       },
     },
   })
