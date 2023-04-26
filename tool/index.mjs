@@ -38,11 +38,16 @@ const menu = [
   },
 ]
 
-await fetch(host + `/restaurants/${restId}/menu`, {
+const { insertedIds } = await fetch(host + `/restaurants/${restId}/menu`, {
   method: 'POST',
   body: JSON.stringify(menu),
   headers,
 }).then((r) => r.json())
+
+await fetch(host + `/restaurants/${restId}/menu/${insertedIds[0]}`, {
+  method: 'DELETE',
+  headers,
+})
 
 const menuWithIds = await fetch(host + `/restaurants/${restId}/menu`).then(
   (r) => r.json()

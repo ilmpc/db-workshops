@@ -20,7 +20,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/tool/index.mjs"
+      "program": "${workspaceFolder}/tool/test.mjs"
     }
   ]
 }

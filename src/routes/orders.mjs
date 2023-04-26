@@ -10,15 +10,28 @@ const ORDER_STATUSES = {
 
 export async function makeOrder(req) {
   const orders = this.mongo.db.collection('orders')
+  const products = this.mongo.db.collection('products')
   const orderData = req.body
-  // TODO: add validation for product list
+
+  const restaurant_id = new ObjectId(orderData.restId)
+  const product_list = orderData.products.map(({ id, amount }) => ({
+    id: new ObjectId(id),
+    amount,
+  }))
+
+  const validProducts = await products.count({
+    restaurant_id,
+    deleted: { $ne: true },
+    _id: { $in: product_list.map(({ id }) => id) },
+  })
+  if (validProducts !== product_list.length) {
+    throw new Error('Not valid product')
+  }
+
   const { insertedId } = await orders.insertOne({
-    restaurant_id: new ObjectId(orderData.restId),
+    restaurant_id,
     user_id: new ObjectId(orderData.userId),
-    product_list: orderData.products.map(({ id, amount }) => ({
-      id: new ObjectId(id),
-      amount,
-    })),
+    product_list,
     status: ORDER_STATUSES.pending,
   })
   return { orderId: insertedId }

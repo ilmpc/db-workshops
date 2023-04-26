@@ -7,13 +7,15 @@ import {
 } from './orders.mjs'
 import {
   getRestaurantById,
-  addProductsInMenu,
   createRestaurant,
-  getRestaurantMenu,
   getRestaurants,
-  removeProductFromMenu,
   updateRestaurant,
 } from './rest.mjs'
+import {
+  addProductsInMenu,
+  getRestaurantMenu,
+  removeProductFromMenu,
+} from './products.mjs'
 import { getUsers, createUser, getUserById, updateUser } from './users.mjs'
 
 export default async function routes(fastify, options) {
