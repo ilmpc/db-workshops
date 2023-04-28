@@ -6,7 +6,13 @@ const headers = new Headers({
 const order = {
   restId: '6449198016e6e114e0d11515',
   userId: '6449198016e6e114e0d11514',
-  products: [{ id: '6449199d16e6e114e0d11519', amount: 2 }],
+  products: [
+    {
+      id: '6449199d16e6e114e0d11516',
+      amount: 2,
+    },
+    { id: '6449199d16e6e114e0d11517', amount: 2 },
+  ],
 }
 const resp = await fetch(host + '/order', {
   method: 'POST',

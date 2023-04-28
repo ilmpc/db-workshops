@@ -1,102 +1,75 @@
-// rest
-{
-  location: {
-    address: '1, Pushkin st',
-    coordinates: [10.25, 85.52]
-  },
-  menu: [
-    {
-      "name": "Apple",
-      "price": 2.5
-    }
-  ],
-  name: 'Crusty crabs',
-  cuisine: 'Seafood'
-}
-// customer
-{
-  fullname: 'John Smith',
-  // address - for delivery
-  phone_number: '+1258789456'
-}
-// order
-{
-  product_list: [
-    { id: 'adlkjlk213d', amount: 1 },
-    { id: 'dlakdl1edas', amount: 2 }
-  ],
-  restarunt_id: 'ld33aksld1e',
-  customer_id: 'qwosajo123d',
-  status: 'pending', // 'cooking', 'ready', 'completed'
-}
-
-
-// user:
-// - create profile
-// - update information in profile
-// user:
-// - see list of restarunts
-// *** geo query, how far user from restarunt
-// - see menu of a restarunt
-// - make order from a restarunt (pending staust)
-// rest:
-// - see pending orders
-// - start cooking
-// - ready for pick up
-// user
-// - see their orders (pending, coooking, ready)
-// rest: 
-// - give our order to user -> chagnge state to complete
-// user:
-// - see history of orders (completed)
-
-// rest:
-// - create rest
-// - update their information
-// - change menu (soft delete)
-
 use('eats')
-db.users.find();
-db.users.drop();
-db.orders.drop();
-db.rest.drop();
-
-// create user
-function createUser(data) {
-  const { insertedId } = db.users.insertOne({ phone_number: data.phone, fullname: data.fullname })
-  return insertedId
-}
-const data = {
-  "phone": "+123546",
-  "fullName": "John Smith"
-}
-createUser(data)
-
-// update user
-const data = {
-  id: '64243a6436932e789f07ad82',
-  phone: '+278956'
-}
-const { id, ...restData } = data
-db.users.updateOne({ _id: ObjectId(data.id) }, { $set: restData })
-
-// create rest
-const data = {
-  location: {
-    address: '1, Pushkin st',
-    coordinates: [10.25, 85.52]
+db.orders.aggregate([
+  {
+    $match: {
+      _id: new ObjectId('644bb66afeb299f292f9ad4b'),
+    },
   },
-  name: 'Crusty crabs',
-  cuisine: 'Seafood'
-}
-db.rest.insertOne({ ...data, menu: [] });
-
-// update rest
-const data = {
-  id: 64243bc20a781a4278733466,
-  location: {
-    address: '2, Pushkin st'
-  }
-}
-const {id, ...rest} = data
-db.rest.updateOne({ _id: ObjectId(id) }, { $set: data })
+  {
+    $lookup: {
+      localField: 'user_id',
+      from: 'users',
+      foreignField: '_id',
+      as: 'user',
+    },
+  },
+  {
+    $unwind: {
+      path: '$user',
+    },
+  },
+  {
+    $lookup: {
+      from: 'restaurants',
+      localField: 'restaurant_id',
+      foreignField: '_id',
+      as: 'restaurant',
+    },
+  },
+  {
+    $unwind: {
+      path: '$restaurant',
+    },
+  },
+  {
+    $unwind: {
+      path: '$product_list',
+    },
+  },
+  {
+    $lookup: {
+      from: 'products',
+      let: {
+        productId: '$product_list.id',
+        product: '$product_list',
+      },
+      pipeline: [
+        { $match: { $expr: { $eq: ['$_id', '$$productId'] } } },
+        {
+          $replaceRoot: {
+            newRoot: { $mergeObjects: ['$$product', '$$ROOT'] },
+          },
+        },
+      ],
+      as: 'product_list',
+    },
+  },
+  {
+    $group: {
+      _id: '$_id',
+      status: { $first: '$status' },
+      user: { $first: '$user' },
+      restaurant: { $first: '$restaurant' },
+      product_list: {
+        $push: { $first: '$product_list' },
+      },
+    },
+  },
+  {
+    $project: {
+      user_id: 0,
+      restaurant_id: 0,
+      'product_list.id': 0,
+    },
+  },
+])

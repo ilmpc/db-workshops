@@ -99,6 +99,11 @@ export async function getOrder(req) {
       },
     },
     {
+      $unwind: {
+        path: '$user',
+      },
+    },
+    {
       $lookup: {
         from: 'restaurants',
         localField: 'restaurant_id',
@@ -106,35 +111,53 @@ export async function getOrder(req) {
         as: 'restaurant',
       },
     },
-
-    {
-      $project: {
-        user_id: 0,
-        restaurant_id: 0,
-      },
-    },
-    {
-      $unwind: {
-        path: '$user',
-      },
-    },
     {
       $unwind: {
         path: '$restaurant',
       },
     },
+    {
+      $unwind: {
+        path: '$product_list',
+      },
+    },
+    {
+      $lookup: {
+        from: 'products',
+        let: {
+          productId: '$product_list.id',
+          product: '$product_list',
+        },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$_id', '$$productId'] } } },
+          {
+            $replaceRoot: {
+              newRoot: { $mergeObjects: ['$$product', '$$ROOT'] },
+            },
+          },
+        ],
+        as: 'product_list',
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        status: { $first: '$status' },
+        user: { $first: '$user' },
+        restaurant: { $first: '$restaurant' },
+        product_list: {
+          $push: { $first: '$product_list' },
+        },
+      },
+    },
+    {
+      $project: {
+        user_id: 0,
+        restaurant_id: 0,
+        'product_list.id': 0,
+      },
+    },
   ])
   const order = await cursor.next().finally(() => cursor.close())
-  const menu = order.restaurant.menu.reduce((acc, e) => {
-    acc[e._id] = e
-    return acc
-  }, {})
-  order.product_list = order.product_list.map(({ id, amount }) => {
-    return {
-      ...menu[id],
-      amount,
-    }
-  })
-  delete order.restaurant.menu
   return order
 }
