@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.mjs",
+  "type": "module",
   "scripts": {
     "start": "node --watch .",
     "format": "prettier -w 'src/**/*.mjs'",
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config=jest.config.mjs"
   },
   "author": "",
   "license": "ISC",
