@@ -19,7 +19,7 @@ fastify.register(fastifySwaggerUi, {
 
 fastify.register(fastifyMongodb, {
   forceClose: true,
-  url: process.env.MONGODB_URL,
+  url: process.env.MONGO_URL,
 })
 
 fastify.register(routes)
