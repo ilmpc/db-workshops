@@ -25,7 +25,12 @@ export async function addProductsInMenu(req) {
     }
   })
 
-  return products.insertMany(newProducts)
+  const { insertedIds } = await products.insertMany(newProducts)
+  return data.map(({ name, price }, index) => ({
+    id: insertedIds[index],
+    name,
+    price,
+  }))
 }
 
 export async function removeProductFromMenu(req) {
