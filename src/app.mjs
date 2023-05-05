@@ -12,7 +12,7 @@ export default function Application(fastify) {
 
   fastify.register(fastifyMongodb, {
     forceClose: true,
-    url: process.env.MONGO_URL,
+    url: process.env.MONGO_URL + 'eats',
   })
 
   fastify.register(routes)
