@@ -1,67 +1,179 @@
-// rest
-{
-  location: {
-    address: '1, Pushkin st',
-    coordinates: [10.25, 85.52]
-  },
-  menu: [
+use("eats");
+// db.dropDatabase();
+// users
+const user = {
+  name: "Mark",
+  savedAddress: [
     {
-      _id: 0,
-      name: 'Apple',
-      price: 2.5
-    }
+      title: "Home",
+      address: {
+        long: 21.12345,
+        lat: 11.7895,
+        label: "Pushkin street",
+      },
+    },
   ],
-  name: 'Crusty crabs',
-  cuisine: 'Seafood'
-}
-// customer
-{
-  fullname: 'John Smith',
-  // address - for delivery
-  phone_number: '+1258789456'
-}
-// order
-{
-  product_list: [
-    { id: 'adlkjlk213d', amount: 1 },
-    { id: 'dlakdl1edas', amount: 2 }
+  email: "example@mail.ru",
+  phone: "+995789456123",
+};
+// products
+const product = {
+  restId: 1,
+  title: "Apple",
+  weight: 100,
+  price: 5.85,
+  category: ["vegan"],
+  image: "https://placeholder.com/",
+  // deleted: true
+};
+// restaurants
+const restaurant = {
+  name: "Crusty crabs",
+  phone: "+995789456123",
+  address: {
+    long: 21.12345,
+    lat: 11.7895,
+    label: "Pushkin street",
+  },
+  foodStyle: ["asia", "europe"],
+  rating: 5.0,
+};
+// couriers
+const courier = {
+  name: "Alex",
+  phone: "+7747458489",
+  image: "",
+  rating: 5.0,
+  vehicle: "car",
+  currentCoordinates: {
+    long: 21.1234,
+    lat: 11.7854,
+  },
+};
+
+// orders
+const order = {
+  userId: "",
+  restId: "",
+  courierId: "",
+  address: {
+    long: 21.12345,
+    lat: 11.7895,
+    label: "Pushkin street",
+  },
+  products: [
+    {
+      productId: 1,
+      amount: 1,
+    },
   ],
-  restarunt_id: 'ld33aksld1e',
-  customer_id: 'qwosajo123d',
-  status: 'pending', // 'cooking', 'ready', 'completed'
-}
+  totalPrice: 100,
+  notesForRest: "",
+  notesForCourier: "",
+  paymentType: "cash", // card
+  paid: true,
+  status: "pending", // 'pending', 'cooking', 'delivery', 'completed', 'cancelled'
+};
 
+// Creation
+// Register user
+db.users.insertOne({
+  ...user,
+  _id: 1,
+});
+// Register rest
+db.restaurants.insertOne({
+  ...restaurant,
+  _id: 1,
+});
 
-// user:
-// - create profile
-// - update information in profile
-// user:
-// - see list of restarunts
-// *** geo query, how far user from restarunt
-// - see menu of a restarunt
-// - make order from a restarunt (pending staust)
-// rest:
-// - see pending orders
-// - start cooking
-// - ready for pick up
-// user
-// - see their orders (pending, coooking, ready)
-// rest: 
-// - give our order to user -> chagnge state to complete
-// user:
-// - see history of orders (completed)
+// Add product
+db.products.insertMany([
+  {
+    ...product,
+    _id: 1,
+    title: "Apple",
+  },
+  {
+    ...product,
+    _id: 2,
+    title: "Banana",
+  },
+  {
+    ...product,
+    _id: 3,
+    title: "Strawberry",
+  },
+]);
 
-// rest:
-// - create rest
-// - update their information
-// - change menu (soft delete)
+db.couriers.insertOne({
+  ...courier,
+  _id: 1,
+});
 
+db.orders.insertOne({
+  ...order,
+  _id: 1,
+  courierId: 1,
+  restId: 1,
+  userId: 1,
+});
 
+const orderedProductIds = [1, 2];
+db.products.countDocuments({
+  restId: 1,
+  _id: { $in: orderedProductIds },
+});
 
-const data = {
-  phone: '+123546',
-  fullname: 'John Smith'
-}
-db.users.insertOne
+use("eats");
+const orderedProducts = [
+  {
+    productId: 1,
+    amount: 1,
+  },
+  {
+    productId: 2,
+    amount: 2,
+  },
+];
+db.products.aggregate([
+  {
+    $project: {
+      price: 1,
+    },
+  },
+  {
+    $lookup: {
+      localField: "_id",
+      foreignField: "productId",
+      as: "order",
+      pipeline: [
+        {
+          $documents: orderedProducts,
+        },
+      ],
+    },
+  },
+  {
+    $unwind: {
+      path: "$order",
+    },
+  },
+  {
+    $group: {
+      _id: "",
+      totalPrice: {
+        $sum: { $multiply: ["$price", "$order.amount"] },
+      },
+    },
+  },
+]);
 
-
+// получить продукты по id и получить только цену и id
+db.products.find(
+  {
+    restId: 1,
+    _id: { $in: [1, 2] },
+  },
+  { price: 1 }
+);
