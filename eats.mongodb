@@ -1,5 +1,5 @@
 use("eats");
-// db.dropDatabase();
+db.dropDatabase();
 // users
 const user = {
   name: "Mark",
@@ -86,6 +86,11 @@ db.restaurants.insertOne({
   ...restaurant,
   _id: 1,
 });
+db.restaurants.insertOne({
+  ...restaurant,
+  foodStyle: ["europe"],
+  _id: 2,
+});
 
 // Add product
 db.products.insertMany([
@@ -119,6 +124,15 @@ db.orders.insertOne({
   userId: 1,
 });
 
+db.orders.insertOne({
+  ...order,
+  _id: 2,
+  courierId: 1,
+  restId: 2,
+  userId: 1,
+});
+
+// Check if products exists
 const orderedProductIds = [1, 2];
 db.products.countDocuments({
   restId: 1,
@@ -136,7 +150,7 @@ const orderedProducts = [
     amount: 2,
   },
 ];
-db.products.aggregate([
+const cursor = db.products.aggregate([
   {
     $project: {
       price: 1,
@@ -168,12 +182,80 @@ db.products.aggregate([
     },
   },
 ]);
+const totalPrice = Math.round(cursor.next().totalPrice * 100) / 100;
 
-// получить продукты по id и получить только цену и id
-db.products.find(
+// update order with totalPrice
+db.orders.updateOne({ _id: 1 }, { $set: { totalPrice } });
+
+use("eats");
+// get orders of restaurant
+db.orders.find(
   {
     restId: 1,
-    _id: { $in: [1, 2] },
+    status: { $in: ["pending", "cooking", "delivery"] },
   },
-  { price: 1 }
+  {
+    address: 0,
+    notesForCourier: 0,
+  }
 );
+
+// get orders of user
+db.orders.find({
+  userId: 1,
+  status: { $in: ["pending", "cooking", "delivery"] },
+});
+
+// get orders for courier
+db.orders.find(
+  {
+    courierId: 1,
+    status: { $in: ["pending", "cooking", "delivery"] },
+  },
+  { products: 0, totalPrice: 0, notesForRest: 0 }
+);
+// get order full information (with courier)
+db.orders.aggregate([
+  {
+    $match: {
+      _id: 1,
+    },
+  },
+  {
+    $lookup: {
+      from: "couriers",
+      localField: "courierId",
+      foreignField: "_id",
+      as: "courier",
+    },
+  },
+  {
+    $unwind: {
+      path: "$courier",
+    },
+  },
+  {
+    $project: {
+      address: 0,
+      notesForCourier: 0,
+      courierId: 0,
+    },
+  },
+]);
+
+// update order status
+db.orders.updateOne({ _id: 1 }, { $set: { status: "completed" } });
+
+// get history orders for user
+db.orders.find({
+  userId: 1,
+  status: { $in: ["completed", "cancelled"] },
+});
+
+// find restaurant with style ['asia']
+const styles = ["europe"];
+use("eats");
+
+db.restaurants.find({
+  foodStyle: { $in: styles },
+});
