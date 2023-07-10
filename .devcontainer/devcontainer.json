@@ -8,5 +8,5 @@
       ]
     }
   },
-  "postCreateCommand": "docker run -d -p27017:27017 mongo"
+  "postCreateCommand": "docker run -p27017:27017 -d -v '$(pwd)/restaurants.json':/app/rest.json --name db mongo && docker exec db mongoimport /app/rest.json"
 }

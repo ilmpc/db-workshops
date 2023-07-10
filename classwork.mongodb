@@ -6,12 +6,5 @@
 // https://www.w3schools.com/mongodb/mongodb_mongosh_find.php
 // https://www.mongodb.com/docs/manual/crud/
 
-use('mongodbVSCodePlaygroundDB');
 
-// db.sales.insertOne({
-//   data: 'qwe'
-// })
-
-db.sales.find({ quantity: { $exists: 1 } });
-db.sales.findOne({ quantity: { $exists: 1 } });
-
+db.rest.find();
